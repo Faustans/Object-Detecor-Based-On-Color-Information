@@ -5,6 +5,7 @@
 #include "opencv2/ximgproc/segmentation.hpp"
 #include "opencv2/photo/cuda.hpp"
 #include "opencv2/photo.hpp"
+#include "opencv2/imgproc.hpp"
 
 using namespace cv;
 using namespace cv::ximgproc::segmentation;
@@ -17,18 +18,19 @@ const Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0,255), rng.uniform
 
 
 int main(int argc, char** argv) {
-	for (int i = 0; i<=argc;i++){
-		cout << argv[i] << endl;
-	}
+	//for (int i = 0; i<=argc;i++){
+//		cout << argv[i] << endl;
+//	}
 	VideoCapture cap;
-
+	cap.set(CAP_PROP_FRAME_WIDTH, 500);
+	cap.set(CAP_PROP_FRAME_HEIGHT, 600);
 	if( argc == 2)
 	{
 		string arg1(argv[1]);
 		if (arg1.compare("-c") == 0)
 		{
 			std::cout << "Opening with camera" << std::endl;
-			cap=VideoCapture(1);
+			cap=VideoCapture(0);
 		}
 		else
 		{
@@ -83,14 +85,22 @@ int main(int argc, char** argv) {
 		//Converting image from BGR to HSV color space.
 		Mat hsv;
 		cvtColor(frame, hsv, COLOR_BGR2HSV);
-	
+
 		Mat mask1, mask2;
 
 		// mask for black
 		//inRange(hsv, Scalar(0, 0, 0), Scalar(180,255,30), mask1);
 		// mask for red
 		//inRange(hsv, Scalar(0, 120, 150), Scalar(10, 255, 255), mask1);
-		inRange(hsv, Scalar(170, 120, 120), Scalar(180, 255, 255), mask1);
+		//inRange(hsv, Scalar(170, 120, 120), Scalar(180, 255, 255), mask1); //Red
+		//inRange(hsv, 	Scalar(0, 0, 0, 0), Scalar(180, 255, 30, 0), mask1); Black
+		//inRange(hsv, 	Scalar(0, 0, 200, 0), Scalar(180, 255, 255, 0), mask1); White
+
+		inRange(hsv, Scalar(0, 120, 70), Scalar(10, 255, 255), mask1);
+		inRange(hsv, Scalar(170, 120, 70), Scalar(180, 255, 255), mask2);
+
+		//inRange(hsv, Scalar(0, 70, 50), Scalar(10, 255, 255), mask1);
+    //inRange(hsv, Scalar(170, 70, 50), Scalar(180, 255, 255), mask2);
 
 		// Generating the final mask
 		mask1 = mask1 + mask2;
@@ -103,9 +113,6 @@ int main(int argc, char** argv) {
 		bitwise_not(mask1,mask2);
 		Mat res1, res2, final_output;
 
-		Mat cnts;
-  	vector<vector<Point> > contours;
-		vector<Vec4i> hierarchy;
 
 		// Segmenting the cloth out of the frame using bitwise and with the inverted mask
 		bitwise_and(frame,frame,res1,mask2);
@@ -121,19 +128,41 @@ int main(int argc, char** argv) {
 		//imshow("res2", res2);
 		//drawing square around object
 		Mat denoised;
+		Mat cnts;
+  	vector<vector<Point> > contours;
+		vector<Vec4i> hierarchy;
+
 		//cvtColor(res2, res2, COLOR_BGR2GRAY, 1);
 		//fastNlMeansDenoising(res2, denoised,1, 7, 21);
 		Canny( res2, cnts, thresh, thresh*2, 3 );
-		
+
 		findContours(cnts,contours,hierarchy,RETR_EXTERNAL,CHAIN_APPROX_SIMPLE);
 
+		//Try to draw Square around color object;
+
 		Mat drawing = Mat::zeros( cnts.size(), CV_8UC3 );
-	  for( int i = 0; i< contours.size(); i++ )
+		double area = 0;
+		int x = 0;
+	 	for( int i = 0; i< contours.size(); i++ )
 	     {
 	       Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
-	       drawContours( drawing, contours, i, color, 2, 8, hierarchy, 0, Point() );
-	     }
-		imshow("magic", final_output);
+				 if(contourArea(contours[i])>area){
+					 area = contourArea(contours[i]);
+					 x = i;
+				 }
+				 //Mat x;
+				 //boxPoints(r,x);
+	       //drawContours( drawing, x, i, color, 2, 8, hierarchy, 0, Point() );
+		}
+		if(contours.size()>0){
+			Mat obj_area;
+ 		 //double ep = 0.1*arcLength(contours[x],true);
+ 		 //approxPolyDP(contours[x],obj_area,ep,true);
+ 		 Rect r = boundingRect(contours[x]);
+ 		 rectangle(frame,r,Scalar(0,255,0),1,8,0);
+		}
+
+		imshow("magic", frame);
 		imshow("drawing", drawing);
     if (frame.empty())
       break;
