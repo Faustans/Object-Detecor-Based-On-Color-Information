@@ -3,6 +3,8 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/ximgproc/segmentation.hpp"
+#include "opencv2/photo/cuda.hpp"
+#include "opencv2/photo.hpp"
 
 using namespace cv;
 using namespace cv::ximgproc::segmentation;
@@ -81,17 +83,17 @@ int main(int argc, char** argv) {
 		//Converting image from BGR to HSV color space.
 		Mat hsv;
 		cvtColor(frame, hsv, COLOR_BGR2HSV);
-
+	
 		Mat mask1, mask2;
 
 		// mask for black
 		//inRange(hsv, Scalar(0, 0, 0), Scalar(180,255,30), mask1);
 		// mask for red
-		inRange(hsv, Scalar(0, 120, 70), Scalar(250, 255, 255), mask1);
-		//inRange(hsv, Scalar(170, 120, 70), Scalar(255, 255, 255), mask1);
+		//inRange(hsv, Scalar(0, 120, 150), Scalar(10, 255, 255), mask1);
+		inRange(hsv, Scalar(170, 120, 120), Scalar(180, 255, 255), mask1);
 
 		// Generating the final mask
-		//mask1 = mask1 + mask2;
+		mask1 = mask1 + mask2;
 
 		Mat kernel = Mat::ones(3,3, CV_32F);
 		morphologyEx(mask1,mask1,cv::MORPH_OPEN,kernel);
@@ -115,10 +117,14 @@ int main(int argc, char** argv) {
 		// Generating the final augmented output.
 		addWeighted(res1,1,res2,1,0,final_output);
 
-		imshow("res1", res1);
-		imshow("res2", res2);
+		//imshow("res1", res1);
+		//imshow("res2", res2);
 		//drawing square around object
+		Mat denoised;
+		//cvtColor(res2, res2, COLOR_BGR2GRAY, 1);
+		//fastNlMeansDenoising(res2, denoised,1, 7, 21);
 		Canny( res2, cnts, thresh, thresh*2, 3 );
+		
 		findContours(cnts,contours,hierarchy,RETR_EXTERNAL,CHAIN_APPROX_SIMPLE);
 
 		Mat drawing = Mat::zeros( cnts.size(), CV_8UC3 );
