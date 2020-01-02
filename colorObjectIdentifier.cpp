@@ -9,6 +9,8 @@ using namespace cv::ximgproc::segmentation;
 using namespace std;
 
 RNG rng(12345);
+int thresh = 100;
+int max_thresh = 255;
 const Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255));
 
 
@@ -17,11 +19,11 @@ int main(int argc, char** argv) {
 		cout << argv[i] << endl;
 	}
 	VideoCapture cap;
-		
+
 	if( argc == 2)
 	{
 		string arg1(argv[1]);
-		if (arg1.compare("-c") == 0) 
+		if (arg1.compare("-c") == 0)
 		{
 			std::cout << "Opening with camera" << std::endl;
 			cap=VideoCapture(1);
@@ -35,7 +37,7 @@ int main(int argc, char** argv) {
 	else if ( argc == 3)
 	{
 		string arg1(argv[1]);
-		if (arg1.compare("-f") == 0) 
+		if (arg1.compare("-f") == 0)
 		{
 			printf("Opening video %s\n", argv[2]);
 			cap=VideoCapture(argv[2]);
@@ -63,7 +65,7 @@ int main(int argc, char** argv) {
 	{
 		cap >> background;
 	}
-	 
+
 	//Laterally invert the image / flip the image.
 	flip(background,background,1);
 	while(1){
@@ -75,11 +77,11 @@ int main(int argc, char** argv) {
 
 		// inverting frame
 		//flip(frame,frame,1);
-		 
+
 		//Converting image from BGR to HSV color space.
 		Mat hsv;
 		cvtColor(frame, hsv, COLOR_BGR2HSV);
-		 
+
 		Mat mask1, mask2;
 
 		// mask for black
@@ -87,26 +89,41 @@ int main(int argc, char** argv) {
 		// mask for red
 		//inRange(hsv, Scalar(0, 120, 70), Scalar(250, 255, 255), mask1);
 		inRange(hsv, Scalar(170, 120, 70), Scalar(255, 255, 255), mask1);
-		 
+
 		// Generating the final mask
 		//mask1 = mask1 + mask2;
 
 		Mat kernel = Mat::ones(3,3, CV_32F);
 		morphologyEx(mask1,mask1,cv::MORPH_OPEN,kernel);
 		morphologyEx(mask1,mask1,cv::MORPH_DILATE,kernel);
-		 
+
 		// creating an inverted mask to segment out the cloth from the frame
 		bitwise_not(mask1,mask2);
 		Mat res1, res2, final_output;
-		 
+
+		Mat cnts;
+  	vector<vector<Point> > contours;
+		vector<Vec4i> hierarchy;
+
 		// Segmenting the cloth out of the frame using bitwise and with the inverted mask
 		bitwise_and(frame,frame,res1,mask2);
 
     // If the frame is empty, break immediately
 		bitwise_and(background,background,res2,mask1);
- 
+
 		// Generating the final augmented output.
 		addWeighted(res1,1,res2,1,0,final_output);
+
+		//drawing square around object
+		Canny( final_output, cnts, thresh, thresh*2, 3 );
+		findContours(cnts,contours,hierarchy,RETR_EXTERNAL,CHAIN_APPROX_SIMPLE);
+
+		Mat drawing = Mat::zeros( cnts.size(), CV_8UC3 );
+	  for( int i = 0; i< contours.size(); i++ )
+	     {
+	       Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+	       drawContours( drawing, contours, i, color, 2, 8, hierarchy, 0, Point() );
+	     }
 		imshow("magic", final_output);
     if (frame.empty())
       break;
@@ -122,7 +139,7 @@ int main(int argc, char** argv) {
   }
   // When everything done, release the video capture object
   cap.release();
- 
+
   // Closes all the frames
   destroyAllWindows();
 
