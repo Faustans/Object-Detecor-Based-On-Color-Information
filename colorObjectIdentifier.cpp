@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
     cap >> frame;
 
 		// inverting frame
-		//flip(frame,frame,1);
+		flip(frame,frame,1);
 
 		//Converting image from BGR to HSV color space.
 		Mat hsv;
@@ -87,8 +87,8 @@ int main(int argc, char** argv) {
 		// mask for black
 		//inRange(hsv, Scalar(0, 0, 0), Scalar(180,255,30), mask1);
 		// mask for red
-		//inRange(hsv, Scalar(0, 120, 70), Scalar(250, 255, 255), mask1);
-		inRange(hsv, Scalar(170, 120, 70), Scalar(255, 255, 255), mask1);
+		inRange(hsv, Scalar(0, 120, 70), Scalar(250, 255, 255), mask1);
+		//inRange(hsv, Scalar(170, 120, 70), Scalar(255, 255, 255), mask1);
 
 		// Generating the final mask
 		//mask1 = mask1 + mask2;
@@ -109,13 +109,16 @@ int main(int argc, char** argv) {
 		bitwise_and(frame,frame,res1,mask2);
 
     // If the frame is empty, break immediately
-		bitwise_and(background,background,res2,mask1);
+		Mat blank = Mat( background.size(), CV_8UC3, Scalar(255,255,255) );
+		bitwise_and(blank,blank,res2,mask1);
 
 		// Generating the final augmented output.
 		addWeighted(res1,1,res2,1,0,final_output);
 
+		imshow("res1", res1);
+		imshow("res2", res2);
 		//drawing square around object
-		Canny( final_output, cnts, thresh, thresh*2, 3 );
+		Canny( res2, cnts, thresh, thresh*2, 3 );
 		findContours(cnts,contours,hierarchy,RETR_EXTERNAL,CHAIN_APPROX_SIMPLE);
 
 		Mat drawing = Mat::zeros( cnts.size(), CV_8UC3 );
@@ -125,6 +128,7 @@ int main(int argc, char** argv) {
 	       drawContours( drawing, contours, i, color, 2, 8, hierarchy, 0, Point() );
 	     }
 		imshow("magic", final_output);
+		imshow("drawing", drawing);
     if (frame.empty())
       break;
 
