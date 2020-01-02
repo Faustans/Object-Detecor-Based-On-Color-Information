@@ -96,18 +96,27 @@ int main(int argc, char** argv) {
 		//inRange(hsv, 	Scalar(0, 0, 0, 0), Scalar(180, 255, 30, 0), mask1); Black
 		//inRange(hsv, 	Scalar(0, 0, 200, 0), Scalar(180, 255, 255, 0), mask1); White
 
-		inRange(hsv, Scalar(0, 120, 70), Scalar(10, 255, 255), mask1);
-		inRange(hsv, Scalar(170, 120, 70), Scalar(180, 255, 255), mask2);
+		//inRange(hsv, Scalar(0, 100, 100), Scalar(10, 255, 255), mask1);
+		//inRange(hsv, Scalar(160, 100, 100), Scalar(180, 255, 255), mask2);
 
 		//inRange(hsv, Scalar(0, 70, 50), Scalar(10, 255, 255), mask1);
     //inRange(hsv, Scalar(170, 70, 50), Scalar(180, 255, 255), mask2);
 
+		//green
+		inRange(hsv, Scalar(60-15, 100, 50), Scalar(60+15, 255, 255), mask1);
+		//blue
+		inRange(hsv, Scalar(100,150,0), Scalar(140,255,255), mask1);
+    //inRange(hsv, Scalar(170, 70, 50), Scalar(180, 255, 255), mask2);
 		// Generating the final mask
-		mask1 = mask1 + mask2;
+		//mask1 = mask1 + mask2;
 
 		Mat kernel = Mat::ones(3,3, CV_32F);
-		morphologyEx(mask1,mask1,cv::MORPH_OPEN,kernel);
-		morphologyEx(mask1,mask1,cv::MORPH_DILATE,kernel);
+		//morphologyEx(mask1,mask1,cv::MORPH_OPEN,kernel);
+
+		//morphologyEx(mask1,mask1,cv::MORPH_ERODE,kernel);
+		erode(mask1,mask1,kernel,Point(-1,-1),1,BORDER_CONSTANT,morphologyDefaultBorderValue());
+			morphologyEx(mask1,mask1,cv::MORPH_OPEN,kernel);
+
 
 		// creating an inverted mask to segment out the cloth from the frame
 		bitwise_not(mask1,mask2);
@@ -163,7 +172,7 @@ int main(int argc, char** argv) {
 		}
 
 		imshow("magic", frame);
-		imshow("drawing", drawing);
+		imshow("drawing", res2);
     if (frame.empty())
       break;
 
