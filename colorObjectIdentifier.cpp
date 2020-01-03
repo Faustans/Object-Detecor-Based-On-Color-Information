@@ -12,15 +12,58 @@ using namespace cv::ximgproc::segmentation;
 using namespace std;
 
 RNG rng(12345);
+Mat frame;
 int thresh = 100;
 int max_thresh = 255;
+const int hue_slider_max = 255;
+int hue_slider;
+char TrackbarName[50];
+char TrackbarName2[50];
+char TrackbarName3[50];
+const int value_slider_max = 255;
+int value_slider;
+int saturation_slider;
+int saturation_slider_max = 255;
+
 const Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255));
 
+static void on_trackbarHue( int, void* )
+{
+printf("Hue is %d \n", hue_slider);
+}
+
+static void on_trackbarSaturation( int, void* )
+{
+printf("Saturation is %d \n", saturation_slider);
+}
+
+static void on_trackbarValue( int, void* )
+{
+	printf("Value is %d\n",value_slider);
+}
 
 int main(int argc, char** argv) {
 	//for (int i = 0; i<=argc;i++){
 //		cout << argv[i] << endl;
 //	}
+hue_slider = 100;
+value_slider = 0;
+saturation_slider = 150;
+namedWindow("magic", WINDOW_AUTOSIZE);
+//trackbar
+
+
+
+
+sprintf( TrackbarName2, "Value x %d", value_slider_max );
+createTrackbar( TrackbarName2, "magic", &value_slider, value_slider_max, on_trackbarValue );
+
+sprintf( TrackbarName, "Hue x %d", hue_slider_max );
+createTrackbar( TrackbarName, "magic", &hue_slider, hue_slider_max, on_trackbarHue );
+
+sprintf( TrackbarName2, "Saturation x %d", saturation_slider_max );
+createTrackbar( TrackbarName2, "magic", &saturation_slider, saturation_slider_max, on_trackbarSaturation );
+
 	VideoCapture cap;
 	cap.set(CAP_PROP_FRAME_WIDTH, 500);
 	cap.set(CAP_PROP_FRAME_HEIGHT, 600);
@@ -73,7 +116,6 @@ int main(int argc, char** argv) {
 	//Laterally invert the image / flip the image.
 	flip(background,background,1);
 	while(1){
-    Mat frame;
 		Mat treated_output;
 
     // Capture frame-by-frame
@@ -103,12 +145,23 @@ int main(int argc, char** argv) {
     //inRange(hsv, Scalar(170, 70, 50), Scalar(180, 255, 255), mask2);
 
 		//green
-		inRange(hsv, Scalar(60-15, 100, 50), Scalar(60+15, 255, 255), mask1);
+		//inRange(hsv, Scalar(60-15, 100, 50), Scalar(60+15, 255, 255), mask1);
 		//blue
-		inRange(hsv, Scalar(100,150,0), Scalar(140,255,255), mask1);
+		//inRange(hsv, Scalar(100,150,0), Scalar(140,255,255), mask1);
+		//--------------
     //inRange(hsv, Scalar(170, 70, 50), Scalar(180, 255, 255), mask2);
 		// Generating the final mask
 		//mask1 = mask1 + mask2;
+
+
+		//Color based on USER INPUT
+		if(hue_slider<255-40){
+			inRange(hsv, Scalar(hue_slider,saturation_slider,value_slider), Scalar(hue_slider+40,255,255), mask1);
+		}
+		else{
+			inRange(hsv, Scalar(hue_slider,saturation_slider,value_slider), Scalar(hue_slider+(255-hue_slider),255,255), mask1);
+		}
+
 
 		Mat kernel = Mat::ones(3,3, CV_32F);
 		//morphologyEx(mask1,mask1,cv::MORPH_OPEN,kernel);
@@ -171,8 +224,10 @@ int main(int argc, char** argv) {
  		 rectangle(frame,r,Scalar(0,255,0),1,8,0);
 		}
 
-		imshow("magic", frame);
+		putText(frame, "Hue: " + std::to_string(hue_slider) + "  Saturation: " + std::to_string(saturation_slider) + "  Value: " + std::to_string(value_slider), Point(10,50),FONT_HERSHEY_PLAIN,2,Scalar(0,0,255,255),3);
+
 		imshow("drawing", res2);
+		imshow("magic", frame);
     if (frame.empty())
       break;
 
