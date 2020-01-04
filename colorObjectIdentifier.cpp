@@ -15,7 +15,7 @@ RNG rng(12345);
 Mat frame;
 int thresh = 100;
 int max_thresh = 255;
-const int hue_slider_max = 255;
+const int hue_slider_max = 180;
 int hue_slider;
 char TrackbarName[50];
 char TrackbarName2[50];
@@ -51,10 +51,6 @@ value_slider = 0;
 saturation_slider = 150;
 namedWindow("magic", WINDOW_AUTOSIZE);
 //trackbar
-
-
-
-
 sprintf( TrackbarName2, "Value x %d", value_slider_max );
 createTrackbar( TrackbarName2, "magic", &value_slider, value_slider_max, on_trackbarValue );
 
@@ -155,11 +151,11 @@ createTrackbar( TrackbarName2, "magic", &saturation_slider, saturation_slider_ma
 
 
 		//Color based on USER INPUT
-		if(hue_slider<255-40){
+		if(hue_slider<180-40){
 			inRange(hsv, Scalar(hue_slider,saturation_slider,value_slider), Scalar(hue_slider+40,255,255), mask1);
 		}
 		else{
-			inRange(hsv, Scalar(hue_slider,saturation_slider,value_slider), Scalar(hue_slider+(255-hue_slider),255,255), mask1);
+			inRange(hsv, Scalar(hue_slider,saturation_slider,value_slider), Scalar(hue_slider+(180-hue_slider),255,255), mask1);
 		}
 
 
