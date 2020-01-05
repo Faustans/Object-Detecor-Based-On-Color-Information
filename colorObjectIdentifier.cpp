@@ -43,22 +43,19 @@ static void on_trackbarValue( int, void* )
 }
 
 int main(int argc, char** argv) {
-	//for (int i = 0; i<=argc;i++){
-//		cout << argv[i] << endl;
-//	}
-hue_slider = 100;
-value_slider = 0;
-saturation_slider = 150;
-namedWindow("magic", WINDOW_AUTOSIZE);
-//trackbar
-sprintf( TrackbarName2, "Value x %d", value_slider_max );
-createTrackbar( TrackbarName2, "magic", &value_slider, value_slider_max, on_trackbarValue );
+	hue_slider = 100;
+	value_slider = 0;
+	saturation_slider = 150;
+	namedWindow("magic", WINDOW_AUTOSIZE);
+	//trackbar
+	sprintf( TrackbarName2, "Value x %d", value_slider_max );
+	createTrackbar( TrackbarName2, "magic", &value_slider, value_slider_max, on_trackbarValue );
 
-sprintf( TrackbarName, "Hue x %d", hue_slider_max );
-createTrackbar( TrackbarName, "magic", &hue_slider, hue_slider_max, on_trackbarHue );
+	sprintf( TrackbarName, "Hue x %d", hue_slider_max );
+	createTrackbar( TrackbarName, "magic", &hue_slider, hue_slider_max, on_trackbarHue );
 
-sprintf( TrackbarName2, "Saturation x %d", saturation_slider_max );
-createTrackbar( TrackbarName2, "magic", &saturation_slider, saturation_slider_max, on_trackbarSaturation );
+	sprintf( TrackbarName2, "Saturation x %d", saturation_slider_max );
+	createTrackbar( TrackbarName2, "magic", &saturation_slider, saturation_slider_max, on_trackbarSaturation );
 
 	VideoCapture cap;
 	cap.set(CAP_PROP_FRAME_WIDTH, 500);
@@ -126,30 +123,6 @@ createTrackbar( TrackbarName2, "magic", &saturation_slider, saturation_slider_ma
 
 		Mat mask1, mask2;
 
-		// mask for black
-		//inRange(hsv, Scalar(0, 0, 0), Scalar(180,255,30), mask1);
-		// mask for red
-		//inRange(hsv, Scalar(0, 120, 150), Scalar(10, 255, 255), mask1);
-		//inRange(hsv, Scalar(170, 120, 120), Scalar(180, 255, 255), mask1); //Red
-		//inRange(hsv, 	Scalar(0, 0, 0, 0), Scalar(180, 255, 30, 0), mask1); Black
-		//inRange(hsv, 	Scalar(0, 0, 200, 0), Scalar(180, 255, 255, 0), mask1); White
-
-		//inRange(hsv, Scalar(0, 100, 100), Scalar(10, 255, 255), mask1);
-		//inRange(hsv, Scalar(160, 100, 100), Scalar(180, 255, 255), mask2);
-
-		//inRange(hsv, Scalar(0, 70, 50), Scalar(10, 255, 255), mask1);
-    //inRange(hsv, Scalar(170, 70, 50), Scalar(180, 255, 255), mask2);
-
-		//green
-		//inRange(hsv, Scalar(60-15, 100, 50), Scalar(60+15, 255, 255), mask1);
-		//blue
-		//inRange(hsv, Scalar(100,150,0), Scalar(140,255,255), mask1);
-		//--------------
-    //inRange(hsv, Scalar(170, 70, 50), Scalar(180, 255, 255), mask2);
-		// Generating the final mask
-		//mask1 = mask1 + mask2;
-
-
 		//Color based on USER INPUT
 		if(hue_slider<180-40){
 			inRange(hsv, Scalar(hue_slider,saturation_slider,value_slider), Scalar(hue_slider+40,255,255), mask1);
@@ -158,19 +131,13 @@ createTrackbar( TrackbarName2, "magic", &saturation_slider, saturation_slider_ma
 			inRange(hsv, Scalar(hue_slider,saturation_slider,value_slider), Scalar(hue_slider+(180-hue_slider),255,255), mask1);
 		}
 
-
 		Mat kernel = Mat::ones(3,3, CV_32F);
-		//morphologyEx(mask1,mask1,cv::MORPH_OPEN,kernel);
-
-		//morphologyEx(mask1,mask1,cv::MORPH_ERODE,kernel);
 		erode(mask1,mask1,kernel,Point(-1,-1),1,BORDER_CONSTANT,morphologyDefaultBorderValue());
-			morphologyEx(mask1,mask1,cv::MORPH_OPEN,kernel);
-
+		morphologyEx(mask1,mask1,cv::MORPH_OPEN,kernel);
 
 		// creating an inverted mask to segment out the cloth from the frame
 		bitwise_not(mask1,mask2);
 		Mat res1, res2, final_output;
-
 
 		// Segmenting the cloth out of the frame using bitwise and with the inverted mask
 		bitwise_and(frame,frame,res1,mask2);
@@ -182,54 +149,38 @@ createTrackbar( TrackbarName2, "magic", &saturation_slider, saturation_slider_ma
 		// Generating the final augmented output.
 		addWeighted(res1,1,res2,1,0,final_output);
 
-		//imshow("res1", res1);
-		//imshow("res2", res2);
-		//drawing square around object
 		Mat denoised;
 		Mat cnts;
   	vector<vector<Point> > contours;
 		vector<Vec4i> hierarchy;
 
-		//cvtColor(res2, res2, COLOR_BGR2GRAY, 1);
-		//fastNlMeansDenoising(res2, denoised,1, 7, 21);
 		Canny( res2, cnts, thresh, thresh*2, 3 );
 
 		findContours(cnts,contours,hierarchy,RETR_EXTERNAL,CHAIN_APPROX_SIMPLE);
 
 		//Try to draw Square around color object;
-
 		Mat drawing = Mat::zeros( cnts.size(), CV_8UC3 );
 		double area = 0;
 		int x = 0;
 	 	for( int i = 0; i< contours.size(); i++ )
 	     {
-	       Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
 				 if(contourArea(contours[i])>area){
 					 area = contourArea(contours[i]);
 					 x = i;
 				 }
-				 //Mat x;
-				 //boxPoints(r,x);
-	       //drawContours( drawing, x, i, color, 2, 8, hierarchy, 0, Point() );
 		}
-		if(contours.size()>0){
+		if(contours.size()>0)
+		{
 			Mat obj_area;
- 		 //double ep = 0.1*arcLength(contours[x],true);
- 		 //approxPolyDP(contours[x],obj_area,ep,true);
- 		 Rect r = boundingRect(contours[x]);
- 		 rectangle(frame,r,Scalar(0,255,0),1,8,0);
+			Rect r = boundingRect(contours[x]);
+			rectangle(frame,r,Scalar(0,255,0),1,8,0);
 		}
 
 		putText(frame, "Hue: " + std::to_string(hue_slider) + "  Saturation: " + std::to_string(saturation_slider) + "  Value: " + std::to_string(value_slider), Point(10,50),FONT_HERSHEY_PLAIN,2,Scalar(0,0,255,255),3);
 
-		imshow("drawing", res2);
 		imshow("magic", frame);
     if (frame.empty())
       break;
-
-    // Display the resulting frame
-    //imshow( "HSV", hsv );
-		//imshow( "Frame", frame);
 
     // Press  ESC on keyboard to exit
     char c=(char)waitKey(25);
